@@ -69,13 +69,13 @@ def render_fund_overview():
     # 요약 지표
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        total_nav = df['순자산'].sum() / 1e8
+        total_nav = df['순자산'].sum()
         st.metric("총 순자산", f"{total_nav:,.0f}억원")
     with col2:
         avg_return = df['등락률'].mean()
         st.metric("평균 등락률", f"{avg_return:.2f}%")
     with col3:
-        total_inflow = df['순설정'].sum() / 1e8
+        total_inflow = df['순설정'].sum()
         st.metric("순설정", f"{total_inflow:,.1f}억원")
     with col4:
         st.metric("펀드 수", f"{len(df)}개")
@@ -105,10 +105,10 @@ def render_fund_overview():
     st.subheader("펀드 상세")
     df_display = df[['펀드명', 'BM_NM', '순자산', '기준가', '등락률',
                      '주식(%)', 'ETF(%)', '지수선물(%)', '주선(%)', '순설정']].copy()
-    df_display['순자산'] = (df_display['순자산'] / 1e8).apply(lambda x: f"{x:,.0f}억")
+    df_display['순자산'] = df_display['순자산'].apply(lambda x: f"{x:,.0f}억")
     df_display['기준가'] = df_display['기준가'].apply(lambda x: f"{x:,.2f}")
     df_display['등락률'] = df_display['등락률'].apply(lambda x: f"{x:.2f}%")
-    df_display['순설정'] = (df_display['순설정'] / 1e8).apply(lambda x: f"{x:,.1f}억")
+    df_display['순설정'] = df_display['순설정'].apply(lambda x: f"{x:,.1f}억")
 
     st.dataframe(df_display, use_container_width=True, hide_index=True)
 
@@ -174,7 +174,7 @@ def render_fund_performance():
 
     with col2:
         st.subheader("펀드 vs BM")
-        fig = px.scatter(df_fund, x='RtnB', y='RtnF', trendline='ols')
+        fig = px.scatter(df_fund, x='RtnB', y='RtnF')
         fig.update_layout(height=300, margin=dict(l=20, r=20, t=20, b=20))
         st.plotly_chart(fig, use_container_width=True)
 
