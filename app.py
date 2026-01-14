@@ -103,7 +103,7 @@ def render_fund_overview():
 
     # 테이블
     st.subheader("펀드 상세")
-    df_display = df[['펀드명', 'BM_NM', '순자산', '기준가', '등락률',
+    df_display = df[['FundCode', '펀드명', 'BM_NM', '순자산', '기준가', '등락률',
                      '주식(%)', 'ETF(%)', '지수선물(%)', '주선(%)', '순설정']].copy()
     df_display['순자산'] = df_display['순자산'].apply(lambda x: f"{x:,.0f}억")
     df_display['기준가'] = df_display['기준가'].apply(lambda x: f"{x:,.2f}")
@@ -111,6 +111,47 @@ def render_fund_overview():
     df_display['순설정'] = df_display['순설정'].apply(lambda x: f"{x:,.1f}억")
 
     st.dataframe(df_display, use_container_width=True, hide_index=True)
+
+    # 펀드별 포트폴리오
+    st.divider()
+    st.subheader("펀드별 포트폴리오")
+
+    portfolio_data = load_json('fund_portfolio.json')
+    if portfolio_data:
+        df_portfolio = pd.DataFrame(portfolio_data['portfolio'])
+
+        # 펀드 선택
+        fund_options = df[['FundCode', '펀드명']].apply(lambda x: f"{x['FundCode']} - {x['펀드명']}", axis=1).tolist()
+        selected = st.selectbox("펀드 선택", fund_options, key="portfolio_fund")
+        selected_fund_code = selected.split(' - ')[0]
+
+        # 선택된 펀드의 포트폴리오
+        df_fund_portfolio = df_portfolio[df_portfolio['FundCode'] == selected_fund_code].copy()
+
+        if len(df_fund_portfolio) > 0:
+            col1, col2 = st.columns([2, 1])
+
+            with col1:
+                # 포트폴리오 테이블
+                df_port_display = df_fund_portfolio[['ComCode', 'ComName', 'Quantity', 'Price', 'Value', 'Weight']].copy()
+                df_port_display.columns = ['종목코드', '종목명', '수량', '현재가', '평가금액', '비중(%)']
+                df_port_display['수량'] = df_port_display['수량'].apply(lambda x: f"{x:,.0f}")
+                df_port_display['현재가'] = df_port_display['현재가'].apply(lambda x: f"{x:,.0f}")
+                df_port_display['평가금액'] = df_port_display['평가금액'].apply(lambda x: f"{x:,.0f}")
+                df_port_display['비중(%)'] = df_port_display['비중(%)'].apply(lambda x: f"{x:.2f}")
+                st.dataframe(df_port_display, use_container_width=True, hide_index=True, height=400)
+
+            with col2:
+                # 상위 10개 종목 파이차트
+                top10 = df_fund_portfolio.nlargest(10, 'Weight')
+                fig = px.pie(top10, values='Weight', names='ComName', hole=0.3,
+                            title='상위 10개 종목')
+                fig.update_layout(height=400, margin=dict(l=20, r=20, t=40, b=20))
+                st.plotly_chart(fig, use_container_width=True)
+
+            st.caption(f"총 {len(df_fund_portfolio)}개 종목 | 기준일: {portfolio_data['date']}")
+        else:
+            st.info("해당 펀드의 포트폴리오 데이터가 없습니다.")
 
 
 # ============================================================
